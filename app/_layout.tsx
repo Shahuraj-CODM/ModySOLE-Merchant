@@ -18,7 +18,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../lib/store/authStore';
-import UpdateScreen from '../components/updates/UpdateScreen';
 import OnboardingSlides, { ONBOARDING_KEY } from '../components/onboarding/OnboardingSlides';
 import { Colors } from '../constants/theme';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -92,7 +91,6 @@ function AppGuard({ children, onboardingDone }: AppGuardProps) {
 
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
-  const [showUpdate, setShowUpdate] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -109,7 +107,8 @@ export default function RootLayout() {
         });
         const done = await AsyncStorage.getItem(ONBOARDING_KEY);
         setOnboardingDone(!!done);
-        setShowUpdate(true);
+        setAppReady(true);
+        await SplashScreen.hideAsync();
       } catch (e) {
         // On error, still proceed so we don't leave user on blank screen
         setOnboardingDone(true);
@@ -120,25 +119,30 @@ export default function RootLayout() {
     prepare();
   }, []);
 
-  const handleUpdateComplete = async () => {
-    setShowUpdate(false);
-    setAppReady(true);
-    await SplashScreen.hideAsync();
-  };
+  // Background update check — runs after the app is mounted and ready
+  useEffect(() => {
+    if (appReady) {
+      const runBackgroundUpdate = async () => {
+        if (__DEV__ || !Updates.isEnabled) return;
+        try {
+          const check = await Updates.checkForUpdateAsync();
+          if (check.isAvailable) {
+            await Updates.fetchUpdateAsync();
+            console.log('[Updates] Background update downloaded successfully.');
+          }
+        } catch (e) {
+          console.warn('[Updates] Background update check failed:', e);
+        }
+      };
+      // Delay background update check to prioritize main screen rendering and interactions
+      const timer = setTimeout(runBackgroundUpdate, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [appReady]);
 
   // ── Phase 1: Still loading fonts / checking storage ──────────
-  if (!showUpdate && !appReady) {
+  if (!appReady || onboardingDone === null) {
     return null;
-  }
-
-  // ── Phase 2: Fonts ready, show update screen ─────────────────
-  if (showUpdate && !appReady) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors.bgPrimary }}>
-        <StatusBar barStyle="light-content" backgroundColor={Colors.bgPrimary} />
-        <UpdateScreen onComplete={handleUpdateComplete} />
-      </View>
-    );
   }
 
   // ── Phase 3: App fully ready — Stack ALWAYS stays mounted ─────
