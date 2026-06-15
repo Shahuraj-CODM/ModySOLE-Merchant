@@ -36,13 +36,6 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT",
-        "CAMERA",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ]
     },
@@ -81,10 +74,13 @@
     "extra": {
       "apiUrl": "https://modysole-backend.onrender.com",
       "router": {},
-      "eas": {}
+      "eas": {
+        "projectId": "a90b16d1-5548-4afa-9c6a-6353f6bb8de3"
+      }
     },
     "runtimeVersion": {
       "policy": "appVersion"
-    }
+    },
+    "owner": "skylordsoul"
   }
 }
