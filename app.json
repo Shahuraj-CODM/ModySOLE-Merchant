@@ -30,11 +30,8 @@
       },
       "package": "com.modysole.merchant",
       "permissions": [
-        "CAMERA",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ]
@@ -45,12 +42,6 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "ModySOLE needs camera access for AR sole preview."
-        }
-      ],
       [
         "expo-local-authentication",
         {
