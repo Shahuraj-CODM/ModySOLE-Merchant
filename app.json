@@ -81,15 +81,10 @@
     "extra": {
       "apiUrl": "https://modysole-backend.onrender.com",
       "router": {},
-      "eas": {
-        "projectId": "7b4f1e6e-059f-4221-a8a7-5f2a0b4d548a"
-      }
+      "eas": {}
     },
     "runtimeVersion": {
       "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/7b4f1e6e-059f-4221-a8a7-5f2a0b4d548a"
     }
   }
 }
