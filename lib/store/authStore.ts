@@ -41,6 +41,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const { data } = await api.post('/api/auth/login', { email, password });
       await AsyncStorage.setItem('modysole_token', data.token);
+      await AsyncStorage.setItem('modysole_user', JSON.stringify(data.user));
       set({ user: data.user, token: data.token, isGuest: false, isLoading: false });
     } catch (e) {
       set({ isLoading: false });
@@ -53,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const { data } = await api.post('/api/auth/register', { name, email, password, phone, invite_code });
       await AsyncStorage.setItem('modysole_token', data.token);
+      await AsyncStorage.setItem('modysole_user', JSON.stringify(data.user));
       set({ user: data.user, token: data.token, isGuest: false, isLoading: false });
     } catch (e) {
       set({ isLoading: false });
@@ -62,6 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await AsyncStorage.removeItem('modysole_token');
+    await AsyncStorage.removeItem('modysole_user');
     set({ user: null, token: null, isGuest: false });
   },
 
@@ -76,24 +79,50 @@ export const useAuthStore = create<AuthState>((set) => ({
   restore: async () => {
     try {
       const token = await AsyncStorage.getItem('modysole_token');
+      const userStr = await AsyncStorage.getItem('modysole_user');
       const inviteCode = await AsyncStorage.getItem('modysole_invite_verified');
       
       const hasInvite = !!inviteCode;
+      const user = userStr ? JSON.parse(userStr) : null;
 
       if (token) {
-        const { data } = await api.get('/api/auth/me');
-        set({ user: data.user, token, isLoading: false, hasInvite });
+        if (user) {
+          // Optimistically load cached user profile and allow navigation instantly
+          set({ user, token, isLoading: false, hasInvite });
+          
+          // Verify & refresh profile in the background
+          api.get('/api/auth/me')
+            .then(async ({ data }) => {
+              await AsyncStorage.setItem('modysole_user', JSON.stringify(data.user));
+              set({ user: data.user });
+            })
+            .catch(async (err) => {
+              // Only log out if it is an authentication failure (401/403)
+              if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+                await AsyncStorage.removeItem('modysole_token');
+                await AsyncStorage.removeItem('modysole_user');
+                set({ user: null, token: null });
+              }
+            });
+        } else {
+          // Fallback if user profile wasn't cached yet (first load on updated version)
+          const { data } = await api.get('/api/auth/me');
+          await AsyncStorage.setItem('modysole_user', JSON.stringify(data.user));
+          set({ user: data.user, token, isLoading: false, hasInvite });
+        }
       } else {
         set({ isLoading: false, hasInvite });
       }
     } catch {
       await AsyncStorage.removeItem('modysole_token');
-      set({ isLoading: false });
+      await AsyncStorage.removeItem('modysole_user');
+      set({ user: null, token: null, isLoading: false });
     }
   },
   
   updateProfile: async (payload) => {
     const { data } = await api.put('/api/auth/profile', payload);
+    await AsyncStorage.setItem('modysole_user', JSON.stringify(data.user));
     set({ user: data.user });
   },
 }));
