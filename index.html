@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ModySOLE Admin - Real-time Order Control Centre</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome for Premium Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar / Header Area -->
+    <header class="main-header">
+      <div class="logo-area">
+        <i class="fa-solid fa-gauge-high logo-icon"></i>
+        <div>
+          <h1>ModySOLE <span class="badge badge-admin">Admin</span></h1>
+          <p class="subtitle">Real-time Order Control Centre</p>
+        </div>
+      </div>
+      
+      <!-- Connection Status indicator -->
+      <div class="connection-status" id="connection-status">
+        <span class="status-dot dot-offline"></span>
+        <span class="status-text">Connecting to Live Feed...</span>
+      </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <section class="stats-container" id="stats-container">
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-title">Total Orders</span>
+          <h2 class="stat-value" id="stat-total-orders">0</h2>
+        </div>
+        <div class="stat-icon icon-blue"><i class="fa-solid fa-boxes-stacked"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-title">Pending & Active</span>
+          <h2 class="stat-value" id="stat-pending-orders">0</h2>
+        </div>
+        <div class="stat-icon icon-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-title">Delivered Orders</span>
+          <h2 class="stat-value" id="stat-delivered-orders">0</h2>
+        </div>
+        <div class="stat-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-title">Estimated Revenue</span>
+          <h2 class="stat-value" id="stat-revenue">₹0</h2>
+        </div>
+        <div class="stat-icon icon-purple"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+      </div>
+    </section>
+
+    <!-- Content Workspace -->
+    <main class="content-workspace">
+      
+      <!-- Left Panel: Filter & Orders List -->
+      <div class="left-panel">
+        
+        <!-- Controls bar -->
+        <div class="controls-bar">
+          <!-- Tabs filters -->
+          <div class="tabs-scroll-container">
+            <div class="filter-tabs" id="filter-tabs">
+              <button class="tab-btn active" data-filter="all">All Orders</button>
+              <button class="tab-btn" data-filter="pending">Pending</button>
+              <button class="tab-btn" data-filter="packed">Packed</button>
+              <button class="tab-btn" data-filter="shipped">Shipped</button>
+              <button class="tab-btn" data-filter="out_for_delivery">Out for Delivery</button>
+              <button class="tab-btn" data-filter="delivered">Delivered</button>
+              <button class="tab-btn" data-filter="cancelled">Cancelled</button>
+            </div>
+          </div>
+          
+          <!-- Search box -->
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="order-search" placeholder="Search by Order ID or User name...">
+          </div>
+        </div>
+
+        <!-- Orders Grid / List -->
+        <div class="orders-list-wrapper">
+          <div class="orders-list" id="orders-list">
+            <!-- Order cards will be injected dynamically -->
+            <div class="loading-state">
+              <i class="fa-solid fa-circle-notch fa-spin loading-spinner"></i>
+              <p>Loading live orders database...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Panel: Side Details view -->
+      <div class="right-panel" id="details-panel">
+        <div class="empty-details" id="empty-details">
+          <i class="fa-solid fa-circle-info details-info-icon"></i>
+          <h3>Select an Order</h3>
+          <p>Click on any order card in the list to view its complete tracking events log, line items, and perform administrative controls.</p>
+        </div>
+        
+        <!-- Order details card (hidden by default) -->
+        <div class="details-card hidden" id="details-card">
+          <div class="details-header">
+            <div>
+              <span class="details-order-date" id="details-order-date">Date</span>
+              <h3 id="details-order-id">Order ID</h3>
+            </div>
+            <span class="status-badge" id="details-status-badge">Status</span>
+          </div>
+
+          <!-- Customer details -->
+          <div class="details-section">
+            <h4 class="section-title"><i class="fa-solid fa-user"></i> Customer Details</h4>
+            <div class="customer-info">
+              <p><strong>Name:</strong> <span id="details-customer-name">Name</span></p>
+              <p><strong>Email:</strong> <span id="details-customer-email">email@example.com</span></p>
+              <p><strong>Shipping Address:</strong> <span id="details-shipping-address">Address details</span></p>
+            </div>
+          </div>
+
+          <!-- Order items -->
+          <div class="details-section">
+            <h4 class="section-title"><i class="fa-solid fa-cart-shopping"></i> Order Items</h4>
+            <div class="items-list" id="details-items-list">
+              <!-- Items injected dynamically -->
+            </div>
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Subtotal:</span>
+                <span id="details-subtotal">₹0.00</span>
+              </div>
+              <div class="price-row">
+                <span>Shipping:</span>
+                <span id="details-shipping">₹0.00</span>
+              </div>
+              <div class="price-row">
+                <span>Promo Discount:</span>
+                <span id="details-discount">-₹0.00</span>
+              </div>
+              <div class="price-row fee-row hidden" id="details-fee-row">
+                <span>Cancellation Fee:</span>
+                <span id="details-fee">₹0.00</span>
+              </div>
+              <div class="price-row total-row">
+                <span>Grand Total:</span>
+                <span id="details-total">₹0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order events timeline -->
+          <div class="details-section">
+            <h4 class="section-title"><i class="fa-solid fa-route"></i> Tracking History</h4>
+            <div class="timeline" id="details-timeline">
+              <!-- Timeline nodes injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Admin controls / testing actions -->
+          <div class="details-section admin-actions-section">
+            <h4 class="section-title"><i class="fa-solid fa-sliders"></i> Developer Controls</h4>
+            <div class="admin-actions-grid">
+              
+              <!-- Fast forward button -->
+              <div class="action-card">
+                <h5>Time-Travel Fast Forward</h5>
+                <p class="action-desc">Shifts the order's creation time backwards to simulate elapsed time and test the auto-scheduler transitions.</p>
+                <div class="action-inputs">
+                  <select id="fast-forward-minutes">
+                    <option value="30">30 Minutes (Packed ➔ Shipped)</option>
+                    <option value="60" selected>1 Hour (Pending ➔ Packed)</option>
+                    <option value="600">10 Hours (Shipped ➔ Out for Delivery)</option>
+                  </select>
+                  <button class="btn btn-action" id="btn-fast-forward">
+                    <i class="fa-solid fa-forward"></i> Shift Time
+                  </button>
+                </div>
+              </div>
+
+              <!-- Cancel button -->
+              <div class="action-card">
+                <h5>Cancel Order Policy</h5>
+                <p class="action-desc">Triggers cancellation. Standard cancellation rules apply (Free under 30m, 50% shoes fee after 30m).</p>
+                <button class="btn btn-danger btn-full" id="btn-cancel-order">
+                  <i class="fa-solid fa-ban"></i> Cancel Order
+                </button>
+              </div>
+
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Dialog / Modal for Cancellation Confirmation -->
+  <div class="modal-backdrop hidden" id="cancel-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-circle-exclamation text-danger"></i> Confirm Cancellation</h3>
+        <button class="modal-close" id="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>You are about to cancel this order. Our cancellation policy will evaluate the elapsed time since creation:</p>
+        <div class="policy-reminder">
+          <p><i class="fa-solid fa-clock"></i> <strong>Under 30 Minutes:</strong> Free Cancellation (₹0 fee)</p>
+          <p><i class="fa-solid fa-wallet"></i> <strong>After 30 Minutes:</strong> 50% charge of shoes total price</p>
+        </div>
+        <div class="cancellation-preview-box">
+          <p>Elapsed Time: <strong id="cancel-elapsed-time">Calculating...</strong></p>
+          <p>Estimated Cancellation Charge: <strong class="text-danger" id="cancel-estimated-charge">Calculating...</strong></p>
+        </div>
+        <p class="confirm-alert-text">This action cannot be undone. Do you wish to proceed?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel-btn">Back</button>
+        <button class="btn btn-danger" id="modal-confirm-btn">Confirm Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.io connection client library -->
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <!-- Custom JS -->
+  <script src="app.js"></script>
+</body>
+</html>
