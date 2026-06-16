@@ -21,6 +21,7 @@ import { useAuthStore } from '../lib/store/authStore';
 import OnboardingSlides, { ONBOARDING_KEY } from '../components/onboarding/OnboardingSlides';
 import { Colors } from '../constants/theme';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import * as Updates from 'expo-updates';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +39,7 @@ interface AppGuardProps {
 
 function AppGuard({ children, onboardingDone }: AppGuardProps) {
   const { user, isLoading, restore, hasInvite } = useAuthStore();
-  const segments = useSegments();
+  const segments = useSegments() as string[];
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
   const redirectTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);

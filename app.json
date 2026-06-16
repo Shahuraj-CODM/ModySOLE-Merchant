@@ -33,6 +33,10 @@
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ]
     },
@@ -72,6 +76,9 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "owner": "skylordsoul"
+    "owner": "skylordsoul",
+    "updates": {
+      "url": "https://u.expo.dev/a90b16d1-5548-4afa-9c6a-6353f6bb8de3"
+    }
   }
 }
