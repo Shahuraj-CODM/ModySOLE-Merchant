@@ -62,41 +62,49 @@ const statRevenue = document.getElementById('stat-revenue');
 // ─── Socket.IO Listeners & Dashboard Bootstrapper ───────────
 
 function startDashboard() {
-  // Initialize Socket.IO connection
-  socket = io(API_URL);
+  if (typeof io !== 'undefined') {
+    // Initialize Socket.IO connection
+    socket = io(API_URL);
 
-  socket.on('connect', () => {
-    console.log('⚡ Connected to live order feed server.');
-    connectionStatus.innerHTML = `
-      <span class="status-dot dot-online"></span>
-      <span class="status-text">Connected to Live Feed</span>
-    `;
-  });
+    socket.on('connect', () => {
+      console.log('⚡ Connected to live order feed server.');
+      connectionStatus.innerHTML = `
+        <span class="status-dot dot-online"></span>
+        <span class="status-text">Connected to Live Feed</span>
+      `;
+    });
 
-  socket.on('disconnect', () => {
-    console.log('🔌 Disconnected from server.');
-    connectionStatus.innerHTML = `
-      <span class="status-dot dot-offline"></span>
-      <span class="status-text">Connection Offline</span>
-    `;
-  });
+    socket.on('disconnect', () => {
+      console.log('🔌 Disconnected from server.');
+      connectionStatus.innerHTML = `
+        <span class="status-dot dot-offline"></span>
+        <span class="status-text">Connection Offline</span>
+      `;
+    });
 
-  // Listen for global order updates emitted by the server
-  socket.on('order_update', (data) => {
-    console.log('🔔 Received Live Order Update:', data);
-    
-    // Find the updated order in our local list and update its status
-    const order = orders.find(o => o.id === data.orderId);
-    if (order) {
-      order.status = data.status;
+    // Listen for global order updates emitted by the server
+    socket.on('order_update', (data) => {
+      console.log('🔔 Received Live Order Update:', data);
       
-      // Play a soft notification chime or visual effect if desired
-      console.log(`Order ${data.orderId} updated to ${data.status}`);
-    }
-    
-    // Refresh data from database to get full event history and updated totals
-    fetchOrders(false);
-  });
+      // Find the updated order in our local list and update its status
+      const order = orders.find(o => o.id === data.orderId);
+      if (order) {
+        order.status = data.status;
+        
+        // Play a soft notification chime or visual effect if desired
+        console.log(`Order ${data.orderId} updated to ${data.status}`);
+      }
+      
+      // Refresh data from database to get full event history and updated totals
+      fetchOrders(false);
+    });
+  } else {
+    console.warn('⚠️ Socket.IO library is not loaded. Dashboard running in polling fallback mode.');
+    connectionStatus.innerHTML = `
+      <span class="status-dot dot-offline" style="background-color: var(--color-pending);"></span>
+      <span class="status-text">Live Feed Offline (Polling Mode)</span>
+    `;
+  }
 
   // Fetch orders immediately
   fetchOrders();
@@ -277,12 +285,13 @@ function renderOrdersList() {
 }
 
 function joinOrderRoom(orderId) {
-  if (selectedOrderId && selectedOrderId !== orderId) {
-    socket.emit('leave_order', selectedOrderId);
+  if (socket) {
+    if (selectedOrderId && selectedOrderId !== orderId) {
+      socket.emit('leave_order', selectedOrderId);
+    }
+    socket.emit('join_order', orderId);
   }
   selectedOrderId = orderId;
-  socket.emit('join_order', orderId);
-  
   renderDetails(orderId);
 }
 
