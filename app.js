@@ -561,15 +561,28 @@ modalConfirmBtn.addEventListener('click', () => {
 // ─── Security Verification & Initializer ──────────────────────
 
 function checkAuthentication() {
-  const isAuth = localStorage.getItem('modysole_merchant_authenticated') === 'true';
+  const isAuth = sessionStorage.getItem('modysole_merchant_authenticated') === 'true';
   const overlay = document.getElementById('security-overlay');
   
   if (isAuth) {
     overlay.classList.add('hidden');
     startDashboard();
+    setupLockEvent();
   } else {
     overlay.classList.remove('hidden');
     setupSecurityEvents();
+  }
+}
+
+function setupLockEvent() {
+  const btnLockTerminal = document.getElementById('btn-lock-terminal');
+  if (btnLockTerminal) {
+    btnLockTerminal.addEventListener('click', () => {
+      // Clear session storage
+      sessionStorage.removeItem('modysole_merchant_authenticated');
+      // Reload page to display security passcode screen immediately
+      window.location.reload();
+    });
   }
 }
 
@@ -595,9 +608,10 @@ function setupSecurityEvents() {
   const verifyCode = () => {
     const enteredVal = passcodeField.value.trim().toUpperCase();
     if (SECURITY_CODES.includes(enteredVal)) {
-      localStorage.setItem('modysole_merchant_authenticated', 'true');
+      sessionStorage.setItem('modysole_merchant_authenticated', 'true');
       document.getElementById('security-overlay').classList.add('hidden');
       startDashboard();
+      setupLockEvent();
     } else {
       errorMsg.classList.remove('hidden');
       passcodeField.classList.add('error-state');
