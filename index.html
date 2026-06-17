@@ -15,6 +15,36 @@
 </head>
 <body>
 
+  <!-- Security Code Verification Overlay -->
+  <div class="security-overlay" id="security-overlay">
+    <div class="security-box">
+      <div class="security-logo">
+        <i class="fa-solid fa-shield-halved security-icon"></i>
+      </div>
+      <h2>Security Verification</h2>
+      <p>Enter one of the 4 valid merchant security codes to access the Control Centre.</p>
+      
+      <div class="passcode-input-wrapper">
+        <input type="password" id="security-passcode" placeholder="Enter Security Code" autocomplete="off">
+        <button class="toggle-password-btn" id="toggle-password-btn" title="Toggle Visibility">
+          <i class="fa-solid fa-eye" id="eye-icon"></i>
+        </button>
+      </div>
+      
+      <div class="error-msg hidden" id="security-error-msg">
+        <i class="fa-solid fa-circle-exclamation"></i> Invalid security code. Please try again.
+      </div>
+      
+      <button class="btn btn-action btn-full" id="btn-security-submit">
+        <i class="fa-solid fa-unlock-keyhole"></i> Verify & Access
+      </button>
+      
+      <div class="security-footer">
+        <p>ModySOLE Secure Merchant Terminal</p>
+      </div>
+    </div>
+  </div>
+
   <!-- App Container -->
   <div class="app-container">
     

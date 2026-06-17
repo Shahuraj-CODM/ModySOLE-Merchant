@@ -1,7 +1,15 @@
 // ModySOLE Admin Dashboard Client Script
 
 const API_URL = 'https://modysole-backend.onrender.com';
-const socket = io(API_URL);
+let socket = null;
+
+// Predefined 4-digit security codes for merchant dashboard access
+const SECURITY_CODES = [
+  'MS-SECURE-1001',
+  'MS-SECURE-2002',
+  'MS-SECURE-3003',
+  'MS-SECURE-4004'
+];
 
 // State Variables
 let orders = [];
@@ -51,40 +59,51 @@ const statPendingOrders = document.getElementById('stat-pending-orders');
 const statDeliveredOrders = document.getElementById('stat-delivered-orders');
 const statRevenue = document.getElementById('stat-revenue');
 
-// ─── Socket.IO Listeners ────────────────────────────────────
+// ─── Socket.IO Listeners & Dashboard Bootstrapper ───────────
 
-socket.on('connect', () => {
-  console.log('⚡ Connected to live order feed server.');
-  connectionStatus.innerHTML = `
-    <span class="status-dot dot-online"></span>
-    <span class="status-text">Connected to Live Feed</span>
-  `;
-});
+function startDashboard() {
+  // Initialize Socket.IO connection
+  socket = io(API_URL);
 
-socket.on('disconnect', () => {
-  console.log('🔌 Disconnected from server.');
-  connectionStatus.innerHTML = `
-    <span class="status-dot dot-offline"></span>
-    <span class="status-text">Connection Offline</span>
-  `;
-});
+  socket.on('connect', () => {
+    console.log('⚡ Connected to live order feed server.');
+    connectionStatus.innerHTML = `
+      <span class="status-dot dot-online"></span>
+      <span class="status-text">Connected to Live Feed</span>
+    `;
+  });
 
-// Listen for global order updates emitted by the server
-socket.on('order_update', (data) => {
-  console.log('🔔 Received Live Order Update:', data);
-  
-  // Find the updated order in our local list and update its status
-  const order = orders.find(o => o.id === data.orderId);
-  if (order) {
-    order.status = data.status;
+  socket.on('disconnect', () => {
+    console.log('🔌 Disconnected from server.');
+    connectionStatus.innerHTML = `
+      <span class="status-dot dot-offline"></span>
+      <span class="status-text">Connection Offline</span>
+    `;
+  });
+
+  // Listen for global order updates emitted by the server
+  socket.on('order_update', (data) => {
+    console.log('🔔 Received Live Order Update:', data);
     
-    // Play a soft notification chime or visual effect if desired
-    console.log(`Order ${data.orderId} updated to ${data.status}`);
-  }
-  
-  // Refresh data from database to get full event history and updated totals
-  fetchOrders(false);
-});
+    // Find the updated order in our local list and update its status
+    const order = orders.find(o => o.id === data.orderId);
+    if (order) {
+      order.status = data.status;
+      
+      // Play a soft notification chime or visual effect if desired
+      console.log(`Order ${data.orderId} updated to ${data.status}`);
+    }
+    
+    // Refresh data from database to get full event history and updated totals
+    fetchOrders(false);
+  });
+
+  // Fetch orders immediately
+  fetchOrders();
+
+  // Poll in background every 15 seconds as a fallback
+  setInterval(() => fetchOrders(true), 15000);
+}
 
 // ─── API Integrations ──────────────────────────────────────────
 
@@ -530,8 +549,70 @@ modalConfirmBtn.addEventListener('click', () => {
   }
 });
 
-// ─── Initializer ──────────────────────────────────────────────
+// ─── Security Verification & Initializer ──────────────────────
 
-fetchOrders();
-// Poll in background every 15 seconds as a fallback
-setInterval(() => fetchOrders(true), 15000);
+function checkAuthentication() {
+  const isAuth = localStorage.getItem('modysole_merchant_authenticated') === 'true';
+  const overlay = document.getElementById('security-overlay');
+  
+  if (isAuth) {
+    overlay.classList.add('hidden');
+    startDashboard();
+  } else {
+    overlay.classList.remove('hidden');
+    setupSecurityEvents();
+  }
+}
+
+function setupSecurityEvents() {
+  const passcodeField = document.getElementById('security-passcode');
+  const toggleBtn = document.getElementById('toggle-password-btn');
+  const eyeIcon = document.getElementById('eye-icon');
+  const errorMsg = document.getElementById('security-error-msg');
+  const submitBtn = document.getElementById('btn-security-submit');
+  
+  // Toggle password visibility
+  toggleBtn.addEventListener('click', () => {
+    if (passcodeField.type === 'password') {
+      passcodeField.type = 'text';
+      eyeIcon.className = 'fa-solid fa-eye-slash';
+    } else {
+      passcodeField.type = 'password';
+      eyeIcon.className = 'fa-solid fa-eye';
+    }
+  });
+  
+  // Verify passcode
+  const verifyCode = () => {
+    const enteredVal = passcodeField.value.trim().toUpperCase();
+    if (SECURITY_CODES.includes(enteredVal)) {
+      localStorage.setItem('modysole_merchant_authenticated', 'true');
+      document.getElementById('security-overlay').classList.add('hidden');
+      startDashboard();
+    } else {
+      errorMsg.classList.remove('hidden');
+      passcodeField.classList.add('error-state');
+      
+      // Shake animation for visual error feedback
+      const box = document.querySelector('.security-box');
+      box.classList.add('shake');
+      setTimeout(() => box.classList.remove('shake'), 400);
+    }
+  };
+  
+  submitBtn.addEventListener('click', verifyCode);
+  passcodeField.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      verifyCode();
+    }
+  });
+  
+  // Clear error state on typing
+  passcodeField.addEventListener('input', () => {
+    errorMsg.classList.add('hidden');
+    passcodeField.classList.remove('error-state');
+  });
+}
+
+// Trigger check on script execution
+checkAuthentication();
