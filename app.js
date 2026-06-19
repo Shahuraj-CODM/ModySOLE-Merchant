@@ -275,6 +275,9 @@ function renderOrdersList() {
       
       // Join Room and view details
       joinOrderRoom(o.id);
+      
+      // Toggle details view on mobile responsive layout
+      document.body.classList.add('show-details');
     });
 
     ordersList.appendChild(card);
@@ -297,6 +300,7 @@ function renderDetails(orderId) {
   if (!order) {
     emptyDetails.classList.remove('hidden');
     detailsCard.classList.add('hidden');
+    document.body.classList.remove('show-details');
     return;
   }
 
@@ -464,6 +468,16 @@ function addTimelineEventNode(e) {
 }
 
 // ─── Event Handlers ───────────────────────────────────────────
+
+// Back button for mobile view
+const btnBackList = document.getElementById('btn-back-list');
+if (btnBackList) {
+  btnBackList.addEventListener('click', () => {
+    selectedOrderId = null;
+    document.querySelectorAll('.order-card').forEach(c => c.classList.remove('selected'));
+    document.body.classList.remove('show-details');
+  });
+}
 
 // Filter Tabs Click
 filterTabs.addEventListener('click', (e) => {
