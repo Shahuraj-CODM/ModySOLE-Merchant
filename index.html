@@ -230,14 +230,7 @@
                 </div>
               </div>
 
-              <!-- Cancel button -->
-              <div class="action-card">
-                <h5>Cancel Order Policy</h5>
-                <p class="action-desc">Triggers cancellation. Standard cancellation rules apply (Free under 30m, 50% shoes fee after 30m).</p>
-                <button class="btn btn-danger btn-full" id="btn-cancel-order">
-                  <i class="fa-solid fa-ban"></i> Cancel Order
-                </button>
-              </div>
+
 
             </div>
           </div>
@@ -249,31 +242,7 @@
 
   </div>
 
-  <!-- Dialog / Modal for Cancellation Confirmation -->
-  <div class="modal-backdrop hidden" id="cancel-modal">
-    <div class="modal">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-circle-exclamation text-danger"></i> Confirm Cancellation</h3>
-        <button class="modal-close" id="modal-close-btn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>You are about to cancel this order. Our cancellation policy will evaluate the elapsed time since creation:</p>
-        <div class="policy-reminder">
-          <p><i class="fa-solid fa-clock"></i> <strong>Under 30 Minutes:</strong> Free Cancellation (₹0 fee)</p>
-          <p><i class="fa-solid fa-wallet"></i> <strong>After 30 Minutes:</strong> 50% charge of shoes total price</p>
-        </div>
-        <div class="cancellation-preview-box">
-          <p>Elapsed Time: <strong id="cancel-elapsed-time">Calculating...</strong></p>
-          <p>Estimated Cancellation Charge: <strong class="text-danger" id="cancel-estimated-charge">Calculating...</strong></p>
-        </div>
-        <p class="confirm-alert-text">This action cannot be undone. Do you wish to proceed?</p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="modal-cancel-btn">Back</button>
-        <button class="btn btn-danger" id="modal-confirm-btn">Confirm Cancel</button>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Socket.io connection client library served directly by backend -->
   <script src="https://modysole-backend.onrender.com/socket.io/socket.io.js"></script>

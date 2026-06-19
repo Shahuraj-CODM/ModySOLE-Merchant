@@ -41,17 +41,8 @@ const detailsTotal = document.getElementById('details-total');
 const detailsTimeline = document.getElementById('details-timeline');
 
 // Admin Actions Elements
-const btnCancelOrder = document.getElementById('btn-cancel-order');
 const btnFastForward = document.getElementById('btn-fast-forward');
 const fastForwardMinutes = document.getElementById('fast-forward-minutes');
-
-// Modal Elements
-const cancelModal = document.getElementById('cancel-modal');
-const cancelElapsedTime = document.getElementById('cancel-elapsed-time');
-const cancelEstimatedCharge = document.getElementById('cancel-estimated-charge');
-const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-const modalCancelBtn = document.getElementById('modal-cancel-btn');
-const modalCloseBtn = document.getElementById('modal-close-btn');
 
 // Stats Elements
 const statTotalOrders = document.getElementById('stat-total-orders');
@@ -138,23 +129,7 @@ async function fetchOrders(updateSelected = true) {
   }
 }
 
-async function cancelOrderAdmin(orderId) {
-  try {
-    const res = await fetch(`${API_URL}/api/orders/${orderId}/cancel-admin`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const result = await res.json();
-    if (result.success) {
-      console.log('Order cancelled successfully:', result);
-      fetchOrders(true);
-    } else {
-      alert(`Error cancelling order: ${result.error}`);
-    }
-  } catch (err) {
-    console.error('Error cancelling order:', err);
-  }
-}
+
 
 async function fastForwardOrder(orderId, minutes) {
   try {
@@ -441,16 +416,10 @@ function renderDetails(orderId) {
   // Manage Action buttons display
   if (order.status === 'cancelled' || order.status === 'delivered') {
     // Disable buttons
-    btnCancelOrder.setAttribute('disabled', 'true');
-    btnCancelOrder.classList.add('btn-secondary');
-    btnCancelOrder.classList.remove('btn-danger');
     btnFastForward.setAttribute('disabled', 'true');
     btnFastForward.classList.add('btn-secondary');
     btnFastForward.classList.remove('btn-action');
   } else {
-    btnCancelOrder.removeAttribute('disabled');
-    btnCancelOrder.classList.remove('btn-secondary');
-    btnCancelOrder.classList.add('btn-danger');
     btnFastForward.removeAttribute('disabled');
     btnFastForward.classList.remove('btn-secondary');
     btnFastForward.classList.add('btn-action');
@@ -504,59 +473,6 @@ btnFastForward.addEventListener('click', () => {
   });
 });
 
-// Cancel Order button click (opens modal and estimates fee)
-btnCancelOrder.addEventListener('click', () => {
-  if (!selectedOrderId) return;
-  const order = orders.find(o => o.id === selectedOrderId);
-  if (!order) return;
-
-  // Calculate local cancellation fee preview
-  const createdTime = new Date(order.created_at);
-  const now = new Date();
-  const diffMinutes = (now - createdTime) / (1000 * 60);
-
-  let formattedElapsed = '';
-  if (diffMinutes < 60) {
-    formattedElapsed = `${Math.floor(diffMinutes)} minutes`;
-  } else {
-    const hours = Math.floor(diffMinutes / 60);
-    const mins = Math.floor(diffMinutes % 60);
-    formattedElapsed = `${hours} hours ${mins} mins`;
-  }
-
-  let shoesPrice = 0;
-  if (order.items) {
-    order.items.forEach(item => {
-      // Find base shoe products
-      if (item.product_name.toLowerCase().includes('base') || item.product_name.toLowerCase().includes('bundle')) {
-        shoesPrice += parseFloat(item.total_price || 0);
-      }
-    });
-  }
-
-  const estimatedCharge = diffMinutes <= 30 ? 0 : shoesPrice * 0.5;
-
-  cancelElapsedTime.innerText = formattedElapsed;
-  cancelEstimatedCharge.innerText = `₹${estimatedCharge.toFixed(2)} ${diffMinutes <= 30 ? '(Grace Period)' : '(50% Shoes Price)'}`;
-  
-  cancelModal.classList.remove('hidden');
-});
-
-// Modal Actions
-modalCancelBtn.addEventListener('click', () => cancelModal.classList.add('hidden'));
-modalCloseBtn.addEventListener('click', () => cancelModal.classList.add('hidden'));
-modalConfirmBtn.addEventListener('click', () => {
-  if (selectedOrderId) {
-    modalConfirmBtn.setAttribute('disabled', 'true');
-    modalConfirmBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Cancelling...`;
-    
-    cancelOrderAdmin(selectedOrderId).finally(() => {
-      modalConfirmBtn.removeAttribute('disabled');
-      modalConfirmBtn.innerHTML = `Confirm Cancel`;
-      cancelModal.classList.add('hidden');
-    });
-  }
-});
 
 // ─── Security Verification & Initializer ──────────────────────
 
