@@ -54,8 +54,9 @@ const statRevenue = document.getElementById('stat-revenue');
 
 function startDashboard() {
   if (typeof io !== 'undefined') {
-    // Initialize Socket.IO connection
-    socket = io(API_URL);
+    // Initialize Socket.IO connection forcing WebSocket transport directly
+    socket = io(API_URL, { transports: ['websocket'] });
+    let pingIntervalId = null;
 
     socket.on('connect', () => {
       console.log('⚡ Connected to live order feed server.');
@@ -63,6 +64,23 @@ function startDashboard() {
         <span class="status-dot dot-online"></span>
         <span class="status-text">Connected to Live Feed</span>
       `;
+
+      // Start real-time ping latency check every 3 seconds
+      if (pingIntervalId) clearInterval(pingIntervalId);
+      pingIntervalId = setInterval(() => {
+        if (socket && socket.connected) {
+          socket.emit('ping_latency', Date.now());
+        }
+      }, 3000);
+    });
+
+    // Listen for latency pong responses
+    socket.on('pong_latency', (sentTime) => {
+      const latency = Date.now() - sentTime;
+      const textEl = connectionStatus.querySelector('.status-text');
+      if (textEl) {
+        textEl.innerText = `Connected to Live Feed (${latency}ms)`;
+      }
     });
 
     socket.on('disconnect', () => {
@@ -71,6 +89,10 @@ function startDashboard() {
         <span class="status-dot dot-offline"></span>
         <span class="status-text">Connection Offline</span>
       `;
+      if (pingIntervalId) {
+        clearInterval(pingIntervalId);
+        pingIntervalId = null;
+      }
     });
 
     // Listen for global order updates emitted by the server
