@@ -1277,3 +1277,74 @@ body {
     width: 100%;
   }
 }
+
+/* Navigation Tabs in Header */
+.main-nav {
+  display: flex;
+  gap: 8px;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  padding: 4px;
+  border-radius: 8px;
+  margin: 0 20px;
+}
+
+.nav-tab {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab.active {
+  background-color: #6366f1;
+  color: #ffffff;
+}
+
+/* Workspace Views */
+.workspace-view {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.workspace-view.hidden {
+  display: none !important;
+}
+
+/* Custom styles for sizes stock table in inventory view */
+#sizes-stock-table th, #sizes-stock-table td {
+  padding: 10px 0;
+  font-size: 13px;
+}
+
+#sizes-stock-table td {
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Product list item status/type badges */
+.product-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}

@@ -54,9 +54,19 @@
         <i class="fa-solid fa-gauge-high logo-icon"></i>
         <div>
           <h1>ModySOLE <span class="badge badge-admin">Admin</span></h1>
-          <p class="subtitle">Real-time Order Control Centre</p>
+          <p class="subtitle">Control Centre</p>
         </div>
       </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="main-nav">
+        <button class="nav-tab active" id="nav-btn-orders">
+          <i class="fa-solid fa-boxes-stacked"></i> Orders
+        </button>
+        <button class="nav-tab" id="nav-btn-inventory">
+          <i class="fa-solid fa-warehouse"></i> Inventory
+        </button>
+      </nav>
       
       <!-- Header Controls -->
       <div class="header-controls">
@@ -105,139 +115,241 @@
     <!-- Content Workspace -->
     <main class="content-workspace">
       
-      <!-- Left Panel: Filter & Orders List -->
-      <div class="left-panel">
-        
-        <!-- Controls bar -->
-        <div class="controls-bar">
-          <!-- Tabs filters -->
-          <div class="tabs-scroll-container">
-            <div class="filter-tabs" id="filter-tabs">
-              <button class="tab-btn active" data-filter="all">All Orders</button>
-              <button class="tab-btn" data-filter="pending">Pending</button>
-              <button class="tab-btn" data-filter="packed">Packed</button>
-              <button class="tab-btn" data-filter="shipped">Shipped</button>
-              <button class="tab-btn" data-filter="out_for_delivery">Out for Delivery</button>
-              <button class="tab-btn" data-filter="delivered">Delivered</button>
-              <button class="tab-btn" data-filter="cancelled">Cancelled</button>
+      <!-- View 1: Orders View -->
+      <div class="workspace-view" id="view-orders">
+        <!-- Left Panel: Filter & Orders List -->
+        <div class="left-panel">
+          
+          <!-- Controls bar -->
+          <div class="controls-bar">
+            <!-- Tabs filters -->
+            <div class="tabs-scroll-container">
+              <div class="filter-tabs" id="filter-tabs">
+                <button class="tab-btn active" data-filter="all">All Orders</button>
+                <button class="tab-btn" data-filter="pending">Pending</button>
+                <button class="tab-btn" data-filter="packed">Packed</button>
+                <button class="tab-btn" data-filter="shipped">Shipped</button>
+                <button class="tab-btn" data-filter="out_for_delivery">Out for Delivery</button>
+                <button class="tab-btn" data-filter="delivered">Delivered</button>
+                <button class="tab-btn" data-filter="cancelled">Cancelled</button>
+              </div>
             </div>
+            
+            <!-- Search box -->
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="order-search" placeholder="Search by Order ID or User name...">
+            </div>
+          </div>
+
+          <!-- Orders Grid / List -->
+          <div class="orders-list-wrapper">
+            <div class="orders-list" id="orders-list">
+              <!-- Order cards will be injected dynamically -->
+              <div class="loading-state">
+                <i class="fa-solid fa-circle-notch fa-spin loading-spinner"></i>
+                <p>Loading live orders database...</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Panel: Side Details view -->
+        <div class="right-panel" id="details-panel">
+          <div class="empty-details" id="empty-details">
+            <i class="fa-solid fa-circle-info details-info-icon"></i>
+            <h3>Select an Order</h3>
+            <p>Click on any order card in the list to view its complete tracking events log, line items, and perform administrative controls.</p>
           </div>
           
-          <!-- Search box -->
-          <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="order-search" placeholder="Search by Order ID or User name...">
-          </div>
-        </div>
-
-        <!-- Orders Grid / List -->
-        <div class="orders-list-wrapper">
-          <div class="orders-list" id="orders-list">
-            <!-- Order cards will be injected dynamically -->
-            <div class="loading-state">
-              <i class="fa-solid fa-circle-notch fa-spin loading-spinner"></i>
-              <p>Loading live orders database...</p>
+          <!-- Order details card (hidden by default) -->
+          <div class="details-card hidden" id="details-card">
+            <button class="btn btn-secondary btn-back-list" id="btn-back-list">
+              <i class="fa-solid fa-arrow-left"></i> Back to Orders
+            </button>
+            <div class="details-header">
+              <div>
+                <span class="details-order-date" id="details-order-date">Date</span>
+                <h3 id="details-order-id">Order ID</h3>
+              </div>
+              <span class="status-badge" id="details-status-badge">Status</span>
             </div>
+
+            <!-- Customer details -->
+            <div class="details-section">
+              <h4 class="section-title"><i class="fa-solid fa-user"></i> Customer Details</h4>
+              <div class="customer-info">
+                <p><strong>Name:</strong> <span id="details-customer-name">Name</span></p>
+                <p><strong>Email:</strong> <span id="details-customer-email">email@example.com</span></p>
+                <p><strong>Shipping Address:</strong> <span id="details-shipping-address">Address details</span></p>
+              </div>
+            </div>
+
+            <!-- Order items -->
+            <div class="details-section">
+              <h4 class="section-title"><i class="fa-solid fa-cart-shopping"></i> Order Items</h4>
+              <div class="items-list" id="details-items-list">
+                <!-- Items injected dynamically -->
+              </div>
+              <div class="price-breakdown">
+                <div class="price-row">
+                  <span>Subtotal:</span>
+                  <span id="details-subtotal">₹0.00</span>
+                </div>
+                <div class="price-row">
+                  <span>Shipping:</span>
+                  <span id="details-shipping">₹0.00</span>
+                </div>
+                <div class="price-row">
+                  <span>Promo Discount:</span>
+                  <span id="details-discount">-₹0.00</span>
+                </div>
+                <div class="price-row fee-row hidden" id="details-fee-row">
+                  <span>Cancellation Fee:</span>
+                  <span id="details-fee">₹0.00</span>
+                </div>
+                <div class="price-row total-row">
+                  <span>Grand Total:</span>
+                  <span id="details-total">₹0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order events timeline -->
+            <div class="details-section">
+              <h4 class="section-title"><i class="fa-solid fa-route"></i> Tracking History</h4>
+              <div class="timeline" id="details-timeline">
+                <!-- Timeline nodes injected dynamically -->
+              </div>
+            </div>
+
+            <!-- Admin controls / testing actions -->
+            <div class="details-section admin-actions-section">
+              <h4 class="section-title"><i class="fa-solid fa-sliders"></i> Developer Controls</h4>
+              <div class="admin-actions-grid">
+                
+                <!-- Fast forward button -->
+                <div class="action-card">
+                  <h5>Time-Travel Fast Forward</h5>
+                  <p class="action-desc">Shifts the order's creation time backwards to simulate elapsed time and test the auto-scheduler transitions.</p>
+                  <div class="action-inputs">
+                    <select id="fast-forward-minutes">
+                      <option value="30">30 Minutes (Packed ➔ Shipped)</option>
+                      <option value="60" selected>1 Hour (Pending ➔ Packed)</option>
+                      <option value="600">10 Hours (Shipped ➔ Out for Delivery)</option>
+                    </select>
+                    <button class="btn btn-action" id="btn-fast-forward">
+                      <i class="fa-solid fa-forward"></i> Shift Time
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            
           </div>
         </div>
-
       </div>
 
-      <!-- Right Panel: Side Details view -->
-      <div class="right-panel" id="details-panel">
-        <div class="empty-details" id="empty-details">
-          <i class="fa-solid fa-circle-info details-info-icon"></i>
-          <h3>Select an Order</h3>
-          <p>Click on any order card in the list to view its complete tracking events log, line items, and perform administrative controls.</p>
+      <!-- View 2: Inventory View -->
+      <div class="workspace-view hidden" id="view-inventory">
+        <!-- Left Panel: Products List -->
+        <div class="left-panel">
+          <div class="controls-bar">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="inventory-search" placeholder="Search products by name or type...">
+            </div>
+          </div>
+          <div class="orders-list-wrapper">
+            <div class="orders-list" id="inventory-list">
+              <!-- Products injected dynamically -->
+            </div>
+          </div>
         </div>
-        
-        <!-- Order details card (hidden by default) -->
-        <div class="details-card hidden" id="details-card">
-          <button class="btn btn-secondary btn-back-list" id="btn-back-list">
-            <i class="fa-solid fa-arrow-left"></i> Back to Orders
-          </button>
-          <div class="details-header">
-            <div>
-              <span class="details-order-date" id="details-order-date">Date</span>
-              <h3 id="details-order-id">Order ID</h3>
-            </div>
-            <span class="status-badge" id="details-status-badge">Status</span>
+
+        <!-- Right Panel: Stock Editor details -->
+        <div class="right-panel" id="inventory-details-panel">
+          <div class="empty-details" id="empty-inventory-details">
+            <i class="fa-solid fa-warehouse details-info-icon"></i>
+            <h3>Select a Product</h3>
+            <p>Select any item in the left list to view size specifications and update stock levels.</p>
           </div>
 
-          <!-- Customer details -->
-          <div class="details-section">
-            <h4 class="section-title"><i class="fa-solid fa-user"></i> Customer Details</h4>
-            <div class="customer-info">
-              <p><strong>Name:</strong> <span id="details-customer-name">Name</span></p>
-              <p><strong>Email:</strong> <span id="details-customer-email">email@example.com</span></p>
-              <p><strong>Shipping Address:</strong> <span id="details-shipping-address">Address details</span></p>
+          <div class="details-card hidden" id="inventory-details-card">
+            <button class="btn btn-secondary btn-back-list" id="btn-back-inventory-list">
+              <i class="fa-solid fa-arrow-left"></i> Back to Inventory
+            </button>
+            <div class="details-header">
+              <div>
+                <span class="details-order-date" id="inventory-product-type">Type</span>
+                <h3 id="inventory-product-name">Product Name</h3>
+              </div>
+              <span class="status-badge status-delivered" id="inventory-product-price">₹0.00</span>
             </div>
-          </div>
 
-          <!-- Order items -->
-          <div class="details-section">
-            <h4 class="section-title"><i class="fa-solid fa-cart-shopping"></i> Order Items</h4>
-            <div class="items-list" id="details-items-list">
-              <!-- Items injected dynamically -->
+            <!-- Product info details -->
+            <div class="details-section">
+              <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                <img id="inventory-product-image" src="" style="width: 80px; height: 80px; border-radius: 8px; border: 1px solid var(--border);" alt="product">
+                <div>
+                  <p><strong>Color:</strong> <span id="inventory-product-color">N/A</span></p>
+                  <p><strong>Material:</strong> <span id="inventory-product-material">N/A</span></p>
+                </div>
+              </div>
+              <p style="font-size: 13px; line-height: 18px; color: var(--text-secondary);" id="inventory-product-desc">Description</p>
             </div>
-            <div class="price-breakdown">
-              <div class="price-row">
-                <span>Subtotal:</span>
-                <span id="details-subtotal">₹0.00</span>
-              </div>
-              <div class="price-row">
-                <span>Shipping:</span>
-                <span id="details-shipping">₹0.00</span>
-              </div>
-              <div class="price-row">
-                <span>Promo Discount:</span>
-                <span id="details-discount">-₹0.00</span>
-              </div>
-              <div class="price-row fee-row hidden" id="details-fee-row">
-                <span>Cancellation Fee:</span>
-                <span id="details-fee">₹0.00</span>
-              </div>
-              <div class="price-row total-row">
-                <span>Grand Total:</span>
-                <span id="details-total">₹0.00</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- Order events timeline -->
-          <div class="details-section">
-            <h4 class="section-title"><i class="fa-solid fa-route"></i> Tracking History</h4>
-            <div class="timeline" id="details-timeline">
-              <!-- Timeline nodes injected dynamically -->
-            </div>
-          </div>
-
-          <!-- Admin controls / testing actions -->
-          <div class="details-section admin-actions-section">
-            <h4 class="section-title"><i class="fa-solid fa-sliders"></i> Developer Controls</h4>
-            <div class="admin-actions-grid">
+            <!-- Stock Editor -->
+            <div class="details-section">
+              <h4 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Edit Stock Level</h4>
               
-              <!-- Fast forward button -->
-              <div class="action-card">
-                <h5>Time-Travel Fast Forward</h5>
-                <p class="action-desc">Shifts the order's creation time backwards to simulate elapsed time and test the auto-scheduler transitions.</p>
-                <div class="action-inputs">
-                  <select id="fast-forward-minutes">
-                    <option value="30">30 Minutes (Packed ➔ Shipped)</option>
-                    <option value="60" selected>1 Hour (Pending ➔ Packed)</option>
-                    <option value="600">10 Hours (Shipped ➔ Out for Delivery)</option>
-                  </select>
-                  <button class="btn btn-action" id="btn-fast-forward">
-                    <i class="fa-solid fa-forward"></i> Shift Time
-                  </button>
+              <!-- Generic stock editor for unsized items (laces, bundles) -->
+              <div id="generic-stock-editor" class="hidden">
+                <div class="action-card">
+                  <h5>General Stock Count</h5>
+                  <p class="action-desc">Update the available stock count directly for this item.</p>
+                  <div class="action-inputs">
+                    <input type="number" id="generic-stock-input" min="0" style="padding: 10px; width: 100px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); margin-right: 10px;">
+                    <button class="btn btn-action" id="btn-save-generic-stock">
+                      <i class="fa-solid fa-floppy-disk"></i> Save Stock
+                    </button>
+                  </div>
                 </div>
               </div>
 
-
+              <!-- Size-specific stock editor for shoes/soles/bases -->
+              <div id="sized-stock-editor" class="hidden">
+                <div class="action-card">
+                  <h5>Size-Specific Stock</h5>
+                  <p class="action-desc">Select a size and update its available inventory count.</p>
+                  <div class="action-inputs" style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                    <select id="size-selector" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); flex: 1;">
+                      <!-- Sizes injected dynamically -->
+                    </select>
+                    <input type="number" id="sized-stock-input" min="0" placeholder="Qty" style="padding: 10px; width: 80px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                    <button class="btn btn-action" id="btn-save-sized-stock">
+                      <i class="fa-solid fa-floppy-disk"></i> Save Stock
+                    </button>
+                  </div>
+                  <!-- Table of current sizes and stock -->
+                  <table style="width: 100%; border-collapse: collapse; margin-top: 10px;" id="sizes-stock-table">
+                    <thead>
+                      <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                        <th style="padding: 8px 0; font-size: 13px; color: var(--text-secondary);">Size</th>
+                        <th style="padding: 8px 0; font-size: 13px; color: var(--text-secondary); text-align: right;">Available Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sizes-stock-tbody">
+                      <!-- Sizes list injected dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
             </div>
           </div>
-          
         </div>
       </div>
 

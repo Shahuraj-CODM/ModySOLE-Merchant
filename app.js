@@ -589,5 +589,284 @@ function setupSecurityEvents() {
   });
 }
 
+// ─── Inventory Management Module ──────────────────────────────
+let products = [];
+let selectedProductId = null;
+
+// DOM Queries for Inventory View
+const navBtnOrders = document.getElementById('nav-btn-orders');
+const navBtnInventory = document.getElementById('nav-btn-inventory');
+const viewOrders = document.getElementById('view-orders');
+const viewInventory = document.getElementById('view-inventory');
+
+const inventoryList = document.getElementById('inventory-list');
+const inventorySearch = document.getElementById('inventory-search');
+const inventoryDetailsPanel = document.getElementById('inventory-details-panel');
+const emptyInventoryDetails = document.getElementById('empty-inventory-details');
+const inventoryDetailsCard = document.getElementById('inventory-details-card');
+
+const inventoryProductType = document.getElementById('inventory-product-type');
+const inventoryProductName = document.getElementById('inventory-product-name');
+const inventoryProductPrice = document.getElementById('inventory-product-price');
+const inventoryProductImage = document.getElementById('inventory-product-image');
+const inventoryProductColor = document.getElementById('inventory-product-color');
+const inventoryProductMaterial = document.getElementById('inventory-product-material');
+const inventoryProductDesc = document.getElementById('inventory-product-desc');
+
+const genericStockEditor = document.getElementById('generic-stock-editor');
+const genericStockInput = document.getElementById('generic-stock-input');
+const btnSaveGenericStock = document.getElementById('btn-save-generic-stock');
+
+const sizedStockEditor = document.getElementById('sized-stock-editor');
+const sizeSelector = document.getElementById('size-selector');
+const sizedStockInput = document.getElementById('sized-stock-input');
+const btnSaveSizedStock = document.getElementById('btn-save-sized-stock');
+const sizesStockTbody = document.getElementById('sizes-stock-tbody');
+const btnBackInventoryList = document.getElementById('btn-back-inventory-list');
+
+// Setup View Switching
+function setupNavigation() {
+  if (navBtnOrders && navBtnInventory) {
+    navBtnOrders.addEventListener('click', () => {
+      navBtnOrders.classList.add('active');
+      navBtnInventory.classList.remove('active');
+      viewOrders.classList.remove('hidden');
+      viewInventory.classList.add('hidden');
+      document.body.classList.remove('show-details');
+    });
+
+    navBtnInventory.addEventListener('click', () => {
+      navBtnInventory.classList.add('active');
+      navBtnOrders.classList.remove('active');
+      viewInventory.classList.remove('hidden');
+      viewOrders.classList.add('hidden');
+      document.body.classList.remove('show-details');
+      fetchProducts();
+    });
+  }
+
+  if (btnBackInventoryList) {
+    btnBackInventoryList.addEventListener('click', () => {
+      selectedProductId = null;
+      document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+      document.body.classList.remove('show-details');
+    });
+  }
+
+  if (inventorySearch) {
+    inventorySearch.addEventListener('input', renderProductsList);
+  }
+}
+
+// Fetch Products from API
+async function fetchProducts(updateSelected = true) {
+  try {
+    const res = await fetch(`${API_URL}/api/products`);
+    const data = await res.json();
+    products = data.products || [];
+    
+    renderProductsList();
+    
+    if (selectedProductId && updateSelected) {
+      renderProductDetails(selectedProductId);
+    }
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    inventoryList.innerHTML = `
+      <div class="no-orders-state">
+        <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+        <p>Failed to load inventory products. Make sure the backend API server is running.</p>
+      </div>
+    `;
+  }
+}
+
+// Render Products List on Left Panel
+function renderProductsList() {
+  inventoryList.innerHTML = '';
+  const searchVal = inventorySearch.value.toLowerCase().trim();
+
+  const filtered = products.filter(p => {
+    if (searchVal) {
+      const matchName = p.name && p.name.toLowerCase().includes(searchVal);
+      const matchType = p.type && p.type.toLowerCase().includes(searchVal);
+      const matchDesc = p.description && p.description.toLowerCase().includes(searchVal);
+      return matchName || matchType || matchDesc;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    inventoryList.innerHTML = `
+      <div class="no-orders-state">
+        <i class="fa-solid fa-box-open"></i>
+        <p>No matching products found.</p>
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = `order-card product-card ${selectedProductId === p.id ? 'selected' : ''}`;
+    card.setAttribute('data-id', p.id);
+
+    // Calculate total stock for sized items, or show generic stock
+    let stockDisplay = '';
+    if (p.sizes && p.sizes.length > 0) {
+      const totalStock = p.sizes.reduce((sum, s) => sum + parseInt(s.stock || 0), 0);
+      stockDisplay = `${totalStock} in stock (${p.sizes.length} sizes)`;
+    } else {
+      stockDisplay = `${p.stock} in stock`;
+    }
+
+    card.innerHTML = `
+      <div class="order-card-header">
+        <div>
+          <div class="order-card-id" style="font-size: 13px; font-weight: 600; white-space: normal; line-height: 18px; margin-bottom: 4px;">${p.name}</div>
+          <span class="product-type-badge">${p.type}</span>
+        </div>
+      </div>
+      <div class="order-card-customer" style="margin-top: 8px; font-weight: 500; color: var(--color-delivered);">
+        <i class="fa-solid fa-warehouse"></i> ${stockDisplay}
+      </div>
+      <div class="order-card-footer" style="padding-top: 8px; margin-top: 8px;">
+        <div>
+          <span class="order-card-price-label">Price</span>
+          <div class="order-card-price" style="font-size: 14px;">₹${parseFloat(p.price).toFixed(2)}</div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-muted"></i>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedProductId = p.id;
+      renderProductDetails(p.id);
+      document.body.classList.add('show-details');
+    });
+
+    inventoryList.appendChild(card);
+  });
+}
+
+// Render Product Details on Right Panel
+function renderProductDetails(productId) {
+  const product = products.find(p => p.id === productId);
+  if (!product) {
+    emptyInventoryDetails.classList.remove('hidden');
+    inventoryDetailsCard.classList.add('hidden');
+    document.body.classList.remove('show-details');
+    return;
+  }
+
+  emptyInventoryDetails.classList.add('hidden');
+  inventoryDetailsCard.classList.remove('hidden');
+
+  // Header Details
+  inventoryProductType.innerText = product.type;
+  inventoryProductName.innerText = product.name;
+  inventoryProductPrice.innerText = `₹${parseFloat(product.price).toFixed(2)}`;
+  inventoryProductImage.src = product.image_url || 'https://picsum.photos/seed/shoe/100/100';
+  inventoryProductColor.innerText = product.color || 'N/A';
+  inventoryProductMaterial.innerText = product.material || 'N/A';
+  inventoryProductDesc.innerText = product.description || 'No description available.';
+
+  // Show/Hide editors based on sizing availability
+  const isSized = product.sizes && product.sizes.length > 0;
+  if (isSized) {
+    sizedStockEditor.classList.remove('hidden');
+    genericStockEditor.classList.add('hidden');
+
+    // Populate Size Selector dropdown
+    sizeSelector.innerHTML = '';
+    product.sizes.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.size;
+      opt.innerText = `Size: ${s.size} (Current: ${s.stock})`;
+      sizeSelector.appendChild(opt);
+    });
+
+    // Reset quantity input
+    if (product.sizes.length > 0) {
+      sizedStockInput.value = product.sizes[0].stock;
+    }
+
+    sizeSelector.onchange = () => {
+      const selectedSizeObj = product.sizes.find(s => s.size === sizeSelector.value);
+      if (selectedSizeObj) {
+        sizedStockInput.value = selectedSizeObj.stock;
+      }
+    };
+
+    // Populate Table
+    sizesStockTbody.innerHTML = '';
+    product.sizes.forEach(s => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="padding: 8px 0; font-weight: 600;">Size ${s.size}</td>
+        <td style="padding: 8px 0; text-align: right; font-weight: 700; color: var(--color-delivered);">${s.stock} pcs</td>
+      `;
+      sizesStockTbody.appendChild(row);
+    });
+
+  } else {
+    genericStockEditor.classList.remove('hidden');
+    sizedStockEditor.classList.add('hidden');
+    genericStockInput.value = product.stock;
+  }
+}
+
+// Save Stock Level
+async function saveStockLevel(productId, size, stock) {
+  try {
+    const res = await fetch(`${API_URL}/api/products/${productId}/stock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ size, stock })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log('Stock updated successfully:', data);
+      await fetchProducts(true);
+    } else {
+      alert(`Error updating stock: ${data.error}`);
+    }
+  } catch (err) {
+    console.error('Error saving stock:', err);
+    alert('Failed to update stock. Check network/server connection.');
+  }
+}
+
+// Bind Inventory save triggers
+if (btnSaveGenericStock) {
+  btnSaveGenericStock.addEventListener('click', () => {
+    if (!selectedProductId) return;
+    const stockVal = parseInt(genericStockInput.value);
+    btnSaveGenericStock.disabled = true;
+    btnSaveGenericStock.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+    saveStockLevel(selectedProductId, null, stockVal).finally(() => {
+      btnSaveGenericStock.disabled = false;
+      btnSaveGenericStock.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Stock';
+    });
+  });
+}
+
+if (btnSaveSizedStock) {
+  btnSaveSizedStock.addEventListener('click', () => {
+    if (!selectedProductId) return;
+    const sizeVal = sizeSelector.value;
+    const stockVal = parseInt(sizedStockInput.value);
+    btnSaveSizedStock.disabled = true;
+    btnSaveSizedStock.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+    saveStockLevel(selectedProductId, sizeVal, stockVal).finally(() => {
+      btnSaveSizedStock.disabled = false;
+      btnSaveSizedStock.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Stock';
+    });
+  });
+}
+
 // Trigger check on script execution
+setupNavigation();
 checkAuthentication();
